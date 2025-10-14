@@ -13,7 +13,6 @@ RUN pip install --no-cache-dir -r requirements.txt gunicorn==21.2.0
 
 # Copy application code
 COPY app/ ./app/
-COPY templates/ ./templates/
 
 # Create non-root user
 RUN useradd --create-home --shell /bin/bash app
