@@ -16,4 +16,4 @@ def test_index_route(client):
 def test_health_route(client):
     response = client.get('/health')
     assert response.status_code == 200
-    assert b'healthy' in response.json['status']
+    assert b'healthy' in response.json['status'].encode('utf-8')
