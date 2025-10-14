@@ -89,6 +89,8 @@ jobs:
                   key: ${{ secrets.AWS_EC2_SSH_KEY }}
                   script: |
                       cd /opt/app
+                      git init
+                      git remote add origin https://github.com/PhilipOyelegbin/automated-flaskapp-deployment.git
                       git pull origin main
                       docker-compose down
                       docker-compose pull
