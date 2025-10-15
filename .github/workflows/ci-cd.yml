@@ -93,7 +93,7 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@v4
 
-            - name: Deploy to EC2
+            - name: Deploy to Staging EC2
               uses: appleboy/ssh-action@v1.0.3
               with:
                   host: ${{ secrets.AWS_EC2_STAGING_HOST }}
@@ -102,8 +102,8 @@ jobs:
                   script: |
                       cd /opt/app
                       echo "Deploying to STAGING environment..."
-                      git init
-                      git remote add origin https://github.com/PhilipOyelegbin/automated-flaskapp-deployment.git
+                      git fetch origin https://github.com/PhilipOyelegbin/automated-flaskapp-deployment.git staging
+                      git checkout staging
                       git pull origin staging
                       docker-compose down
                       docker-compose pull
@@ -129,8 +129,8 @@ jobs:
                   script: |
                       cd /opt/app
                       echo "Deploying to PRODUCTION environment..."
-                      git init
-                      git remote add origin https://github.com/PhilipOyelegbin/automated-flaskapp-deployment.git
+                      git fetch origin https://github.com/PhilipOyelegbin/automated-flaskapp-deployment.git main
+                      git checkout main
                       git pull origin main
                       docker-compose down
                       docker-compose pull
