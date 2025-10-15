@@ -152,7 +152,7 @@ jobs:
                           "blocks": [
                               {
                               "type": "section",
-                              "status": "${{ job.status }}
+                              "status": "${{ job.status }}"
                               "text": {
                                   "type": "mrkdwn",
                                   "text": "🚀 ${{ github.ref == 'refs/heads/main' && 'Production' || 'Staging' }} Deployment ${{ job.status }}
