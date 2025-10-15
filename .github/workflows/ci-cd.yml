@@ -102,7 +102,12 @@ jobs:
                   script: |
                       cd /opt/app
                       echo "Deploying to STAGING environment..."
-                      git fetch origin https://github.com/PhilipOyelegbin/automated-flaskapp-deployment.git staging
+                      if [ ! -d ".git" ]; then
+                          echo "Cloning the repository into /opt/app..."
+                          git clone https://github.com/PhilipOyelegbin/automated-flaskapp-deployment.git .
+                      fi
+                      echo "Fetching latest changes..."
+                      git fetch origin staging
                       git checkout staging
                       git pull origin staging
                       docker-compose down
@@ -129,7 +134,12 @@ jobs:
                   script: |
                       cd /opt/app
                       echo "Deploying to PRODUCTION environment..."
-                      git fetch origin https://github.com/PhilipOyelegbin/automated-flaskapp-deployment.git main
+                      if [ ! -d ".git" ]; then
+                          echo "Cloning the repository into /opt/app..."
+                          git clone https://github.com/PhilipOyelegbin/automated-flaskapp-deployment.git .
+                      fi
+                      echo "Fetching latest changes..."
+                      git fetch origin main
                       git checkout main
                       git pull origin main
                       docker-compose down
