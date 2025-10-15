@@ -108,11 +108,11 @@ jobs:
                       # Stop and remove existing containers
                       docker-compose down
 
-                      # Start new containers with the latest image
-                      docker-compose up -d
-
                       # Clean up old images
                       docker image prune -f
+
+                      # Start new containers with the latest image
+                      docker-compose up -d
 
                       echo "✅ Staging deployment completed successfully!"
                       echo "🕒 Image built at: ${{ env.IMAGE_BUILD_TIME }}"
