@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   web:
-    image: philipoyelegbin/flask-ci-cd-app:${DOCKER_IMAGE_TAG}
+    image: philipoyelegbin/flask-ci-cd-app:latest
     ports:
       - "80:5000"
     environment:
