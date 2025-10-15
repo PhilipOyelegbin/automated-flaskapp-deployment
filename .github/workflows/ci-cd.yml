@@ -83,6 +83,10 @@ jobs:
                   cache-from: type=gha
                   cache-to: type=gha,mode=max
 
+            # Set the tag as an output for the next jobs to use
+            - name: Set output for Docker image tag
+              run: echo "DOCKER_IMAGE_TAG=${{ steps.meta.outputs.tags }}" >> $GITHUB_ENV
+
     deploy-staging:
         needs: build-and-push
         runs-on: ubuntu-latest
@@ -111,7 +115,7 @@ jobs:
                       git checkout staging
                       git pull origin staging
                       docker-compose down
-                      docker-compose pull flask-ci-cd-app:staging-${GITHUB_SHA}
+                      docker-compose pull ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${DOCKER_IMAGE_TAG}
                       docker-compose up -d
                       echo "Staging deployment completed successfully!"
 
@@ -143,7 +147,7 @@ jobs:
                       git checkout main
                       git pull origin main
                       docker-compose down
-                      docker-compose pull flask-ci-cd-app:main-${GITHUB_SHA}
+                      docker-compose pull ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${DOCKER_IMAGE_TAG}
                       docker-compose up -d
                       echo "Production deployment completed successfully!"
 
