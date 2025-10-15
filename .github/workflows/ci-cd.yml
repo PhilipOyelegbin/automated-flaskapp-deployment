@@ -111,7 +111,7 @@ jobs:
                       git checkout staging
                       git pull origin staging
                       docker-compose down
-                      docker-compose pull
+                      docker-compose pull flask-ci-cd-app:staging-${GITHUB_SHA}
                       docker-compose up -d
                       echo "Staging deployment completed successfully!"
 
@@ -143,7 +143,7 @@ jobs:
                       git checkout main
                       git pull origin main
                       docker-compose down
-                      docker-compose pull
+                      docker-compose pull flask-ci-cd-app:main-${GITHUB_SHA}
                       docker-compose up -d
                       echo "Production deployment completed successfully!"
 
