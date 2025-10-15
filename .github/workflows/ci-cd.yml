@@ -164,7 +164,7 @@ jobs:
                                   "type": "section",
                                   "text": {
                                       "type": "mrkdwn",
-                                      "text": "🚀 Staging Deployment success\nJob: notify\nStatus: success\nBranch: 8/merge\nCommit: 2bd90e1e098cd6b81bff30530506f6509910a52e\nURL: https://github.com/PhilipOyelegbin/automated-flaskapp-deployment/actions/runs/18522497326"
+                                      "text": "🚀 Deployment ${{ job.status }}\nJob: notify\nStatus: ${{ job.status }}\nBranch: ${{ github.head_ref }}/merge\nCommit: ${{ github.sha }}\nURL: ${{ github.repositoryUrl }}/${{ github.run_id }}"
                                   }
                               }
                           ]
