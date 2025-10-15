@@ -85,7 +85,7 @@ jobs:
 
             # Set the tag as an output for the next jobs to use
             - name: Set output for Docker image tag
-              run: echo "DOCKER_IMAGE_TAG=${{ steps.meta.outputs.tags }}" >> $GITHUB_ENV
+              run: echo "DOCKER_IMAGE_TAG=${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:staging-${{ github.sha }}" >> $GITHUB_ENV
 
     deploy-staging:
         needs: build-and-push
