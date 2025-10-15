@@ -1,4 +1,4 @@
-name: Multi-Environment CI/CD Pipeline
+name: Multi Environment CI/CD Pipeline
 
 on:
     push:
@@ -164,7 +164,7 @@ jobs:
                                   "type": "section",
                                   "text": {
                                       "type": "mrkdwn",
-                                      "text": "🚀 Deployment ${{ job.status }} from ${{github.base_ref}}\nJob: notify\nStatus: ${{ job.status }}\nBranch: ${{ github.ref_name }}/${{github.event_name}}\nCommit: ${{ github.sha }}\nURL: ${{github.server_url}}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                                      "text": "🚀 Deployment ${{ job.status }} ${{github.base_ref}}\nJob: notify\nStatus: ${{ job.status }}\nBranch: ${{ github.ref_name }}/${{github.event_name}}\nCommit: ${{ github.sha }}\nURL: ${{github.server_url}}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
                                   }
                               }
                           ]
