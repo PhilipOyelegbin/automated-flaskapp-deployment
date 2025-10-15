@@ -143,17 +143,28 @@ jobs:
         if: always()
 
         steps:
-            - name: Notify Slack
-              uses: 8398a7/action-slack@v3
+            - name: Post Slack Notification
+              uses: slackapi/slack-github-action@v1.23.0
               with:
-                  status: ${{ job.status }}
-                  text: |
-                      🚀 ${{ github.ref == 'refs/heads/main' && 'Production' || 'Staging' }} Deployment ${{ job.status }}
-                      Job: ${{ github.job }} 
-                      Status: ${{ job.status }} 
-                      Branch: ${{ github.ref_name }} 
-                      Commit: ${{ github.sha }} 
-                      URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-                  webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+                  payload: |
+                      {
+                          "text": "GitHub Actions CI/CD Notification",
+                          "blocks": [
+                              {
+                              "type": "section",
+                              "status": "${{ job.status }}
+                              "text": {
+                                  "type": "mrkdwn",
+                                  "text": "🚀 ${{ github.ref == 'refs/heads/main' && 'Production' || 'Staging' }} Deployment ${{ job.status }}
+                                          Job: ${{ github.job }} 
+                                          Status: ${{ job.status }} 
+                                          Branch: ${{ github.ref_name }} 
+                                          Commit: ${{ github.sha }} 
+                                          URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                                  }
+                              }
+                          ]
+                      }
               env:
                   SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+                  SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
