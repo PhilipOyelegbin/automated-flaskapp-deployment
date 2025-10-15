@@ -155,12 +155,7 @@ jobs:
                               "status": "${{ job.status }}"
                               "text": {
                                   "type": "mrkdwn",
-                                  "text": "🚀 ${{ github.ref == 'refs/heads/main' && 'Production' || 'Staging' }} Deployment ${{ job.status }}
-                                          Job: ${{ github.job }} 
-                                          Status: ${{ job.status }} 
-                                          Branch: ${{ github.ref_name }} 
-                                          Commit: ${{ github.sha }} 
-                                          URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                                  "text": "🚀 ${{ github.ref == 'refs/heads/main' && 'Production' || 'Staging' }} Deployment ${{ job.status }}\nJob: ${{ github.job }}\nStatus: ${{ job.status }}\nBranch: ${{ github.ref_name }}\nCommit: ${{ github.sha }}\nURL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
                                   }
                               }
                           ]
