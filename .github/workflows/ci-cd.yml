@@ -151,16 +151,10 @@ jobs:
                           "text": "GitHub Actions CI/CD Notification",
                           "blocks": [
                               {
-                              "type": "section",
-                              "status": "${{ job.status }}
-                              "text": {
-                                  "type": "mrkdwn",
-                                  "text": "🚀 ${{ github.ref == 'refs/heads/main' && 'Production' || 'Staging' }} Deployment ${{ job.status }}
-                                          Job: ${{ github.job }} 
-                                          Status: ${{ job.status }} 
-                                          Branch: ${{ github.ref_name }} 
-                                          Commit: ${{ github.sha }} 
-                                          URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                                  "type": "section",
+                                  "text": {
+                                      "type": "mrkdwn",
+                                      "text": "🚀 Staging Deployment success\nJob: notify\nStatus: success\nBranch: 8/merge\nCommit: 2bd90e1e098cd6b81bff30530506f6509910a52e\nURL: https://github.com/PhilipOyelegbin/automated-flaskapp-deployment/actions/runs/18522497326"
                                   }
                               }
                           ]
