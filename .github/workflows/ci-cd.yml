@@ -63,29 +63,20 @@ jobs:
                   username: ${{ secrets.DOCKERHUB_USERNAME }}
                   password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-            - name: Extract metadata
-              id: meta
-              uses: docker/metadata-action@v5
-              with:
-                  images: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}
-                  tags: |
-                      type=ref,event=branch
-                      type=sha,prefix={{branch}}-
-                      type=raw,value=latest,enable={{is_default_branch}}
-
             - name: Build and push Docker image
               uses: docker/build-push-action@v5
               with:
                   context: .
                   push: true
-                  tags: ${{ steps.meta.outputs.tags }}
-                  labels: ${{ steps.meta.outputs.labels }}
+                  tags: |
+                      ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest
                   cache-from: type=gha
                   cache-to: type=gha,mode=max
 
-            # Set the tag as an output for the next jobs to use
-            - name: Set output for Docker image tag
-              run: echo "DOCKER_IMAGE_TAG=${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:staging-${{ github.sha }}" >> $GITHUB_ENV
+            - name: Set environment info
+              run: |
+                  echo "DOCKER_IMAGE=${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest" >> $GITHUB_ENV
+                  echo "IMAGE_BUILD_TIME=$(date -u)" >> $GITHUB_ENV
 
     deploy-staging:
         needs: build-and-push
@@ -105,19 +96,36 @@ jobs:
                   key: ${{ secrets.AWS_EC2_SSH_KEY }}
                   script: |
                       cd /opt/app
-                      echo "Deploying to STAGING environment..."
-                      if [ ! -d ".git" ]; then
-                          echo "Cloning the repository into /opt/app..."
-                          git clone https://github.com/PhilipOyelegbin/automated-flaskapp-deployment.git .
-                      fi
-                      echo "Fetching latest changes..."
-                      git fetch origin staging
-                      git checkout staging
-                      git pull origin staging
+                      echo "🚀 Deploying to STAGING environment..."
+                      echo "📦 Pulling latest Docker image from Docker Hub..."
+
+                      # Login to Docker Hub
+                      echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+
+                      # Pull the latest image
+                      docker pull ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest
+
+                      # Stop and remove existing containers
                       docker-compose down
-                      docker-compose pull ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${DOCKER_IMAGE_TAG}
+
+                      # Start new containers with the latest image
                       docker-compose up -d
-                      echo "Staging deployment completed successfully!"
+
+                      # Clean up old images
+                      docker image prune -f
+
+                      echo "✅ Staging deployment completed successfully!"
+                      echo "🕒 Image built at: ${{ env.IMAGE_BUILD_TIME }}"
+
+                      # Show running containers
+                      echo "📊 Current containers:"
+                      docker-compose ps
+
+                      # Health check
+                      echo "🔍 Performing health check..."
+                      sleep 10
+                      curl -f http://localhost:5000/health || exit 1
+                      echo "✅ Health check passed!"
 
     deploy-production:
         needs: build-and-push
