@@ -1,4 +1,7 @@
 #!/bin/bash
+set -e
+
+echo "Setting up Flask application server..."
 
 # Update system
 sudo apt-get update
@@ -22,29 +25,8 @@ sudo usermod -aG docker ubuntu
 sudo mkdir -p /opt/app
 sudo chown ubuntu:ubuntu /opt/app
 
-# Configure SSH for GitHub Actions
-echo "Creating SSH key for GitHub Actions..."
-sudo -u ubuntu ssh-keygen -t rsa -b 4096 -f /home/ubuntu/.ssh/github_actions -N ""
+# Create logs directory
+sudo mkdir -p /var/log/flask-app
+sudo chown ubuntu:ubuntu /var/log/flask-app
 
-echo "Public key for GitHub Actions:"
-sudo cat /home/ubuntu/.ssh/github_actions.pub
-
-# Create deployment script
-cat > /opt/app/deploy.sh << 'EOF'
-#!/bin/bash
-set -e
-
-cd /opt/app
-
-# Pull latest changes
-git pull origin main
-
-# Build and deploy
-docker-compose down
-docker-compose pull
-docker-compose up -d
-
-echo "Deployment completed successfully!"
-EOF
-
-chmod +x /opt/app/deploy.sh
+echo "Server setup completed successfully!"
