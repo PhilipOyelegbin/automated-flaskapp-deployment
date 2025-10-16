@@ -97,34 +97,24 @@ jobs:
                   script: |
                       cd /opt/app
                       echo "🚀 Deploying to STAGING environment..."
-                      echo "📦 Pulling latest Docker image from Docker Hub..."
-
-                      # Login to Docker Hub
-                      echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
-
-                      # Pull the latest image
-                      docker pull ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest
-
-                      # Stop and remove existing containers
+                      if [ ! -d ".git" ]; then
+                          echo "Cloning the repository into /opt/app..."
+                          git clone https://github.com/PhilipOyelegbin/automated-flaskapp-deployment.git .
+                      fi
+                      echo "📦 Fetching latest changes..."
+                      git fetch origin staging
+                      git checkout staging
+                      git pull origin staging
                       docker-compose down
-
-                      # Clean up old images
-                      docker image prune -f
-
-                      # Start new containers with the latest image
+                      docker-compose pull ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${DOCKER_IMAGE_TAG}
                       docker-compose up -d
-
                       echo "✅ Staging deployment completed successfully!"
                       echo "🕒 Image built at: ${{ env.IMAGE_BUILD_TIME }}"
-
-                      # Show running containers
                       echo "📊 Current containers:"
                       docker-compose ps
-
-                      # Health check
                       echo "🔍 Performing health check..."
                       sleep 10
-                      curl -f http://localhost:5000/health || exit 1
+                      curl -f http://localhost:80/health || exit 1
                       echo "✅ Health check passed!"
 
     deploy-production:
@@ -145,7 +135,7 @@ jobs:
                   key: ${{ secrets.AWS_EC2_SSH_KEY }}
                   script: |
                       cd /opt/app
-                      echo "Deploying to PRODUCTION environment..."
+                      echo "🚀 Deploying to PRODUCTION environment..."
                       if [ ! -d ".git" ]; then
                           echo "Cloning the repository into /opt/app..."
                           git clone https://github.com/PhilipOyelegbin/automated-flaskapp-deployment.git .
@@ -158,6 +148,13 @@ jobs:
                       docker-compose pull ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${DOCKER_IMAGE_TAG}
                       docker-compose up -d
                       echo "Production deployment completed successfully!"
+                      echo "Image built at: ${{ env.IMAGE_BUILD_TIME }}"
+                      echo "Current containers:"
+                      docker-compose ps
+                      echo "Performing health check..."
+                      sleep 10
+                      curl -f http://localhost:80/health || exit 1
+                      echo "Health check passed!"
 
     notify:
         needs: [test, build-and-push, deploy-staging, deploy-production]
