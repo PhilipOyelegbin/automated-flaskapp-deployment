@@ -106,7 +106,7 @@ jobs:
                       git checkout staging
                       git pull origin staging
                       docker-compose down
-                      docker-compose pull ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${DOCKER_IMAGE_TAG}
+                      docker-compose pull
                       docker-compose up -d
                       echo "✅ Staging deployment completed successfully!"
                       echo "🕒 Image built at: ${{ env.IMAGE_BUILD_TIME }}"
@@ -145,7 +145,7 @@ jobs:
                       git checkout main
                       git pull origin main
                       docker-compose down
-                      docker-compose pull ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${DOCKER_IMAGE_TAG}
+                      docker-compose pull
                       docker-compose up -d
                       echo "Production deployment completed successfully!"
                       echo "Image built at: ${{ env.IMAGE_BUILD_TIME }}"
