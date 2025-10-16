@@ -1,5 +1,5 @@
 #!/bin/bash
-HEALTH_CHECK_URL="http://localhost:5000/health"
+HEALTH_CHECK_URL="http://localhost:80/health"
 MAX_RETRIES=3
 RETRY_COUNT=0
 
