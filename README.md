@@ -78,19 +78,23 @@ ssh -i your-key.pem ubuntu@your-ec2-ip "bash /tmp/setup-ec2.sh"
 automated-flaskapp-deployment/
 ├── app/
 │   ├── __init__.py
-│   └── routes.py
+│   ├── routes.py
 │   └── templates/
 │       └── index.html
+├── assets/     # contains the readme images
+├── scripts/
+│   └── health-check.sh
 ├── tests/
 │   ├── __init__.py
 │   └── test_app.py
+├── .github/
+│   └── workflows/
+│       └── ci-cd.
 ├── docker-compose.yml
 ├── Dockerfile
 ├── requirements.txt
-├── .github/
-│   └── workflows/
-│       └── ci-cd.yml
-└── README.md
+├── .gitignore
+├── README.md
 └── setup-ec2.sh
 ```
 
@@ -101,7 +105,7 @@ automated-flaskapp-deployment/
 - [Dockerfile](./Dockerfile)
 - [docker-compose](./docker-compose.yml)
 - [CI/CD](.github/workflows/ci-cd.yml)
-- [Deployment Scripts and Production Rollback](./scripts/deploy.sh)
+- [Health check script](./scripts/health-check.sh)
 
 ---
 
@@ -147,6 +151,10 @@ hotfix/*    → Emergency fixes
 4. Deploys to staging EC2 instance
 5. Sends Slack notification
 
+![staging1](./assets/staging1.png)
+![staging2](./assets/staging2.png)
+![staging3](./assets/staging3.png)
+
 ### Production Deployment (Auto)
 
 1. Merge to `main` branch
@@ -154,6 +162,16 @@ hotfix/*    → Emergency fixes
 3. Builds and pushes Docker image
 4. Deploys to production EC2 instance
 5. Sends Slack notification
+
+![producton1](./assets/production1.png)
+![producton2](./assets/production2.png)
+![producton3](./assets/production3.png)
+
+### Other Deliverables
+
+![workflow1](./assets/workflow1.png)
+![workflow2](./assets/workflow2.png)
+![notification](./assets/notification.png)
 
 ---
 
@@ -163,27 +181,27 @@ hotfix/*    → Emergency fixes
 
 ```bash
 # Staging
-ssh ubuntu@staging-server-ip "cd /opt/app && docker ps"
+ssh ubuntu@staging-server-ip "cd /opt/app && docker-compose ps"
 
 # Production
-ssh ubuntu@production-server-ip "cd /opt/app && docker ps"
+ssh ubuntu@production-server-ip "cd /opt/app && docker-compose ps"
 ```
 
 ### View Logs
 
 ```bash
 # Staging logs
-ssh ubuntu@staging-server-ip "cd /opt/app && docker logs"
+ssh ubuntu@staging-server-ip "cd /opt/app && docker-compose logs"
 
 # Production logs
-ssh ubuntu@production-server-ip "cd /opt/app && docker logs"
+ssh ubuntu@production-server-ip "cd /opt/app && docker-compose logs"
 ```
 
-### Manual Rollback
+### Manual Health Check
 
 ```bash
-# Rollback production
-ssh ubuntu@production-server-ip "cd /opt/app && ./scripts/deploy.sh --rollback"
+# Health check production
+ssh ubuntu@production-server-ip "cd /opt/app && ./scripts/health-check.sh"
 ```
 
 ## Monitoring & Health Checks
@@ -195,6 +213,8 @@ curl http://staging-server-ip/health
 # Production Health Check
 curl http://production-server-ip/health
 ```
+
+![ealth check](./assets/health.png)
 
 **Application URLs:**
 
