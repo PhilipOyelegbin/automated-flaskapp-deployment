@@ -1,14 +1,15 @@
-name: CI/CD Pipeline
+name: Multi Environment CI/CD Pipeline
 
 on:
     push:
-        branches: [main, develop]
+        branches: [staging]
     pull_request:
-        branches: [main]
+        branches: [main, staging]
 
 env:
     IMAGE_NAME: flask-ci-cd-app
-    AWS_EC2_HOST: ${{ secrets.AWS_EC2_HOST }}
+    AWS_EC2_STAGING_HOST: ${{ secrets.AWS_EC2_STAGING_HOST }}
+    AWS_EC2_PRDUCTION_HOST: ${{ secrets.AWS_EC2_PRDUCTION_HOST }}
     AWS_EC2_USER: ubuntu
 
 jobs:
@@ -37,7 +38,17 @@ jobs:
     build-and-push:
         needs: test
         runs-on: ubuntu-latest
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/staging'
+
+        strategy:
+            matrix:
+                include:
+                    - branch: main
+                      environment: production
+                      tag: production
+                    - branch: staging
+                      environment: staging
+                      tag: staging
 
         steps:
             - name: Checkout code
@@ -52,62 +63,121 @@ jobs:
                   username: ${{ secrets.DOCKERHUB_USERNAME }}
                   password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-            - name: Extract metadata
-              id: meta
-              uses: docker/metadata-action@v5
-              with:
-                  images: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}
-                  tags: |
-                      type=ref,event=branch
-                      type=sha,prefix={{branch}}-
-                      type=raw,value=latest,enable={{is_default_branch}}
-
             - name: Build and push Docker image
               uses: docker/build-push-action@v5
               with:
                   context: .
                   push: true
-                  tags: ${{ steps.meta.outputs.tags }}
-                  labels: ${{ steps.meta.outputs.labels }}
+                  tags: |
+                      ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest
                   cache-from: type=gha
                   cache-to: type=gha,mode=max
+
+            - name: Set environment info
+              run: |
+                  echo "DOCKER_IMAGE=${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest" >> $GITHUB_ENV
+                  echo "IMAGE_BUILD_TIME=$(date -u)" >> $GITHUB_ENV
 
     deploy-staging:
         needs: build-and-push
         runs-on: ubuntu-latest
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/staging'
+        environment: staging
 
         steps:
             - name: Checkout code
               uses: actions/checkout@v4
 
-            - name: Deploy to EC2
+            - name: Deploy to Staging EC2
               uses: appleboy/ssh-action@v1.0.3
               with:
-                  host: ${{ secrets.AWS_EC2_HOST }}
+                  host: ${{ secrets.AWS_EC2_STAGING_HOST }}
                   username: ${{ env.AWS_EC2_USER }}
                   key: ${{ secrets.AWS_EC2_SSH_KEY }}
                   script: |
                       cd /opt/app
-                      git init
-                      git remote add origin https://github.com/PhilipOyelegbin/automated-flaskapp-deployment.git
+                      echo "🚀 Deploying to STAGING environment..."
+                      if [ ! -d ".git" ]; then
+                          echo "Cloning the repository into /opt/app..."
+                          git clone https://github.com/PhilipOyelegbin/automated-flaskapp-deployment.git .
+                      fi
+                      echo "📦 Fetching latest changes..."
+                      git fetch origin staging
+                      git checkout staging
+                      git pull origin staging
+                      docker-compose down
+                      docker-compose pull ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${DOCKER_IMAGE_TAG}
+                      docker-compose up -d
+                      echo "✅ Staging deployment completed successfully!"
+                      echo "🕒 Image built at: ${{ env.IMAGE_BUILD_TIME }}"
+                      echo "📊 Current containers:"
+                      docker-compose ps
+                      echo "🔍 Performing health check..."
+                      sleep 10
+                      curl -f http://localhost:80/health || exit 1
+                      echo "✅ Health check passed!"
+
+    deploy-production:
+        needs: build-and-push
+        runs-on: ubuntu-latest
+        if: github.ref == 'refs/heads/main'
+        environment: production
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Deploy to Production EC2
+              uses: appleboy/ssh-action@v1.0.3
+              with:
+                  host: ${{ secrets.AWS_EC2_PRDUCTION_HOST }}
+                  username: ${{ env.AWS_EC2_USER }}
+                  key: ${{ secrets.AWS_EC2_SSH_KEY }}
+                  script: |
+                      cd /opt/app
+                      echo "🚀 Deploying to PRODUCTION environment..."
+                      if [ ! -d ".git" ]; then
+                          echo "Cloning the repository into /opt/app..."
+                          git clone https://github.com/PhilipOyelegbin/automated-flaskapp-deployment.git .
+                      fi
+                      echo "Fetching latest changes..."
+                      git fetch origin main
+                      git checkout main
                       git pull origin main
                       docker-compose down
-                      docker-compose pull
+                      docker-compose pull ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${DOCKER_IMAGE_TAG}
                       docker-compose up -d
-                      echo "Deployment to staging completed successfully!"
+                      echo "Production deployment completed successfully!"
+                      echo "Image built at: ${{ env.IMAGE_BUILD_TIME }}"
+                      echo "Current containers:"
+                      docker-compose ps
+                      echo "Performing health check..."
+                      sleep 10
+                      curl -f http://localhost:80/health || exit 1
+                      echo "Health check passed!"
 
     notify:
-        needs: [test, build-and-push, deploy-staging]
+        needs: [test, build-and-push, deploy-staging, deploy-production]
         runs-on: ubuntu-latest
         if: always()
 
         steps:
-            - name: Notify Slack
-              uses: 8398a7/action-slack@v3
+            - name: Post Slack Notification
+              uses: slackapi/slack-github-action@v1.23.0
               with:
-                  status: ${{ job.status }}
-                  text: 🚀 Deployment ${{ job.status }} for commit ${{ github.sha }}
-                  webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+                  payload: |
+                      {
+                          "text": "GitHub Actions CI/CD Notification",
+                          "blocks": [
+                              {
+                                  "type": "section",
+                                  "text": {
+                                      "type": "mrkdwn",
+                                      "text": "🚀 Deployment ${{ job.status }} ${{github.base_ref}}\nJob: notify\nStatus: ${{ job.status }}\nBranch: ${{ github.ref_name }}/${{github.event_name}}\nCommit: ${{ github.sha }}\nURL: ${{github.server_url}}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                                  }
+                              }
+                          ]
+                      }
               env:
                   SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+                  SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
